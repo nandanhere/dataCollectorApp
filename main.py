@@ -15,8 +15,8 @@ from kivy.utils import platform
 from kivy.lang import Builder
 # comment this if you are running on computer
 from jnius import autoclass
-sensorList = ["date","time","timestamp","floor","location","accelerometer" , "barometer" , "battery" , "brightness" , "compass" , "gps" ,
-     "gravity" , "gyroscope" , "humidity" , "light" , "proximity" , "spatialorientation","temperature" ]
+sensorList = sorted(["date","time","timestamp","floor","location","accelerometer" , "barometer" , "battery" , "brightness" , "compass" , "gps" ,
+     "gravity" , "gyroscope" , "humidity" , "light" , "proximity" , "spatialorientation","temperature" ])
 
 Builder.load_string(
     '''
@@ -102,6 +102,8 @@ class HomeScreen(Screen):
         floor,location = self.ids.floor.text,self.ids.location.text
         print("the inputs are " , self.ids.floor.text, self.ids.location.text)
         self.ids.submitbutton.text = "Floor : " + self.ids.floor.text + " Location: " + self.ids.location.text
+        self.ids.rv.data[self.sensorLabelList['floor']]['secondary_text'] = self.ids.floor.text
+        self.ids.rv.data[self.sensorLabelList['location']]['secondary_text'] = self.ids.location.text
         ss = "{};{}".format(floor,location)
         message = bytes(ss,'utf-8')
         print(message)
