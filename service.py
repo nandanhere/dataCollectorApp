@@ -19,6 +19,8 @@ DEBUG = False
 sensorList = ["date","time","timestamp","floor","location","accelerometer" , "barometer" , "battery" , "brightness" , "compass" , "gps" ,
      "gravity" , "gyroscope" , "humidity" , "light" , "proximity" , "spatialorientation","temperature" ]
 # Create a default dict with default values
+global dictList
+dictList = []
 d = dict.fromkeys(sensorList,"")
 def sendNotif():
     pass
@@ -29,6 +31,7 @@ def gps_callback(**kwargs):
     d['gps'] = {"lat":s[0],"lon":s[1],"speed":s[2],"bearing":s[3],"altitude":s[4]}
             
 def updateValues():
+    global dictList
     print("updating values")
     try:
         d['accelerometer'] = accelerometer.acceleration #type:ignore
@@ -87,13 +90,20 @@ def updateValues():
         d['battery'] = battery.status #type:ignore BATTERY_STATS permission needed
     except:
         print("battery error")
+    dictList.append(d.copy())
 def writeData():
+    global dictList
     print("Writing data")
     if Path(addr).exists():
           with open(addr,'a') as f: #type:ignore
               csw = csv.DictWriter(f,fieldnames=sensorList)
-              csw.writerow(d)
+              for di in dictList:
+                csw.writerow(di)
+              dictList = []
+
+
 if __name__ == '__main__':
+    dictList = []
     compass.enable() #type:ignore
     accelerometer.enable() #type:ignore
     barometer.enable() #type:ignore
@@ -117,6 +127,8 @@ if __name__ == '__main__':
             csw.writeheader()  
     SERVER = OSCThreadServer()
     SERVER.listen('localhost', port=3000, default=True)
+
+
     # The getinfo will recieve the floor number and the location of the room/thing.
     def getInfo(message):
         mess = message.decode("utf-8")
@@ -125,8 +137,13 @@ if __name__ == '__main__':
         print(splitt)
         d["floor"] = splitt[0]
         d["location"] = splitt[1]
+
+    
     SERVER.bind(b'/ping',getInfo)
+    counter = 0
     while True:
+        counter = (counter + 1) % 20
+        time.sleep(0.2)
         updateValues()
-        writeData()
-        sleep(5)
+        if counter == 0:
+          writeData()
